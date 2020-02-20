@@ -1,0 +1,37 @@
+package com.thony.spring.boot.servicio.item.springbootservicioitem.models.service;
+
+import com.thony.spring.boot.servicio.item.springbootservicioitem.models.Item;
+import com.thony.spring.boot.servicio.item.springbootservicioitem.models.Producto;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service("serviceRestTemplate")
+public class ItemServiceImpl implements ITemService {
+
+    @Autowired
+    @Qualifier("clienteRest")
+    private RestTemplate clienteRest;
+
+    @Override
+    public List<Item> findAll() {
+        List<Producto> productos = Arrays.asList(clienteRest.getForObject("http://servicio-productos/api/productos", Producto[].class));
+        // java 8 programacion funcional y expresiones lamda.
+        return productos.stream().map(p -> new Item(p, 1)).collect(Collectors.toList());
+    }
+
+    @Override
+    public Item findById(Long id, Integer cantidad) {
+        Map<String, String> pathVarable = new HashMap<String, String>();
+        pathVarable.put("id", id.toString());
+        Producto producto = clienteRest.getForObject("http://servicio-productos/api/productos/{id}", Producto.class, pathVarable);
+        return new Item(producto, cantidad);
+    }
+}
